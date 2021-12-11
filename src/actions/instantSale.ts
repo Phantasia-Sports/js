@@ -102,11 +102,11 @@ export const instantSale = async ({
     txIds.push(txId);
   }
 
-  const hasWonParticipationPrize = isEligibleForParticipationPrize(winIndex, participationConfig);
-  if (hasWonParticipationPrize) {
-    const { txIds } = await redeemParticipationBidV3({ connection, wallet, store, auction });
-    txIds.push(...txIds);
-  }
+  // const hasWonParticipationPrize = isEligibleForParticipationPrize(winIndex, participationConfig);
+  // if (hasWonParticipationPrize) {
+  //   const { txIds } = await redeemParticipationBidV3({ connection, wallet, store, auction });
+  //   txIds.push(...txIds);
+  // }
 
   return { txIds: txIds };
 };

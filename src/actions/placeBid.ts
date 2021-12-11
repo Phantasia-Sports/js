@@ -1,6 +1,6 @@
 import BN from 'bn.js';
 import { Commitment, Keypair, PublicKey, TransactionSignature } from '@solana/web3.js';
-import { AccountLayout } from '@solana/spl-token';
+import { AccountLayout, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { Wallet } from '../wallet';
 import { Connection } from '../Connection';
 import { sendTransaction } from './transactions';
@@ -91,14 +91,15 @@ export const placeBid = async ({
   }
 
   // create paying account
-  const {
-    account: payingAccount,
-    createTokenAccountTx,
-    closeTokenAccountTx,
-  } = await createWrappedAccountTxs(connection, bidder, amount.toNumber() + accountRentExempt * 2);
-  txBatch.addTransaction(createTokenAccountTx);
-  txBatch.addAfterTransaction(closeTokenAccountTx);
-  txBatch.addSigner(payingAccount);
+  // const {
+  //   account: payingAccount,
+  //   createTokenAccountTx,
+  //   closeTokenAccountTx,
+  // } = await createWrappedAccountTxs(connection, bidder, amount.toNumber() + accountRentExempt * 2);
+  // txBatch.addTransaction(createTokenAccountTx);
+  // txBatch.addAfterTransaction(closeTokenAccountTx);
+  // txBatch.addSigner(payingAccount);
+  const payingAccount = await findAssociatedTokenAddress(bidder, new PublicKey(tokenMint));
   ////
 
   // transfer authority
@@ -107,7 +108,7 @@ export const placeBid = async ({
     createApproveTx,
     createRevokeTx,
   } = createApproveTxs({
-    account: payingAccount.publicKey,
+    account: payingAccount,
     owner: bidder,
     amount: amount.toNumber(),
   });
@@ -121,7 +122,7 @@ export const placeBid = async ({
     { feePayer: bidder },
     {
       bidder,
-      bidderToken: payingAccount.publicKey,
+      bidderToken: payingAccount,
       bidderPot,
       bidderPotToken,
       bidderMeta,
@@ -145,3 +146,15 @@ export const placeBid = async ({
 
   return { txId, bidderPotToken, bidderMeta };
 };
+
+async function findAssociatedTokenAddress(
+  walletAddress: PublicKey,
+  tokenMintAddress: PublicKey,
+): Promise<PublicKey> {
+  return (
+    await PublicKey.findProgramAddress(
+      [walletAddress.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), tokenMintAddress.toBuffer()],
+      new PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'),
+    )
+  )[0];
+}

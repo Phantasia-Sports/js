@@ -1,5 +1,5 @@
 import { Transaction } from '@metaplex-foundation/mpl-core';
-import { AccountLayout, NATIVE_MINT, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { AccountLayout, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { Connection, Keypair, PublicKey } from '@solana/web3.js';
 import { CreateTokenAccount } from '../../programs/shared/transactions/CreateTokenAccount';
 
@@ -21,7 +21,7 @@ export async function createWrappedAccountTxs(
     {
       newAccountPubkey: account.publicKey,
       lamports: amount + accountRentExempt,
-      mint: NATIVE_MINT,
+      mint: new PublicKey('FANTafPFBAt93BNJVpdu25pGPmca3RfwdsDsRrT3LX1r'),
     },
   );
   const closeTokenAccountTx = new Transaction().add(
