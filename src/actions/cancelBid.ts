@@ -1,5 +1,5 @@
-import { Keypair, PublicKey } from '@solana/web3.js';
-import { AccountLayout, NATIVE_MINT, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import {clusterApiUrl, Keypair, PublicKey} from '@solana/web3.js';
+import {AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, NATIVE_MINT, Token, TOKEN_PROGRAM_ID} from '@solana/spl-token';
 import { Wallet } from '../wallet';
 import { Connection } from '../Connection';
 import { sendTransaction } from './transactions';
@@ -96,24 +96,15 @@ export const getCancelBidTransactions = async ({
   vault,
 }: ICancelBidTransactionsParams): Promise<TransactionsBatch> => {
   const txBatch = new TransactionsBatch({ transactions: [] });
-  if (!destAccount) {
-    const account = Keypair.generate();
-    const createTokenAccountTransaction = new CreateTokenAccount(
-      { feePayer: bidder },
-      {
-        newAccountPubkey: account.publicKey,
-        lamports: accountRentExempt,
-        mint: NATIVE_MINT,
-      },
-    );
-    const closeTokenAccountInstruction = new Transaction().add(
-      Token.createCloseAccountInstruction(TOKEN_PROGRAM_ID, account.publicKey, bidder, bidder, []),
-    );
-    txBatch.addTransaction(createTokenAccountTransaction);
-    txBatch.addAfterTransaction(closeTokenAccountInstruction);
-    txBatch.addSigner(account);
-    destAccount = account.publicKey;
-  }
+
+  destAccount = (await PublicKey.findProgramAddress(
+    [
+      bidder.toBuffer(),
+      TOKEN_PROGRAM_ID.toBuffer(),
+      auctionTokenMint.toBuffer(),
+    ],
+    ASSOCIATED_TOKEN_PROGRAM_ID,
+  ))[0];
 
   const cancelBidTransaction = new CancelBid(
     { feePayer: bidder },

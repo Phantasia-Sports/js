@@ -1,6 +1,6 @@
 import BN from 'bn.js';
 import { Commitment, Keypair, PublicKey, TransactionSignature } from '@solana/web3.js';
-import { AccountLayout, TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import {AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID} from '@solana/spl-token';
 import { Wallet } from '../wallet';
 import { Connection } from '../Connection';
 import { sendTransaction } from './transactions';
@@ -57,22 +57,7 @@ export const placeBid = async ({
 
   let txBatch = new TransactionsBatch({ transactions: [] });
 
-  if (bidderPotToken) {
-    // cancel prev bid
-    txBatch = await getCancelBidTransactions({
-      destAccount: null,
-      bidder,
-      accountRentExempt,
-      bidderPot,
-      bidderPotToken,
-      bidderMeta,
-      auction,
-      auctionExtended,
-      auctionTokenMint,
-      vault,
-    });
-    ////
-  } else {
+  if (!bidderPotToken) {
     // create a new account for bid
     const account = Keypair.generate();
     const createBidderPotTransaction = new CreateTokenAccount(
@@ -87,20 +72,9 @@ export const placeBid = async ({
     txBatch.addSigner(account);
     txBatch.addTransaction(createBidderPotTransaction);
     bidderPotToken = account.publicKey;
-    ////
   }
 
-  // create paying account
-  // const {
-  //   account: payingAccount,
-  //   createTokenAccountTx,
-  //   closeTokenAccountTx,
-  // } = await createWrappedAccountTxs(connection, bidder, amount.toNumber() + accountRentExempt * 2);
-  // txBatch.addTransaction(createTokenAccountTx);
-  // txBatch.addAfterTransaction(closeTokenAccountTx);
-  // txBatch.addSigner(payingAccount);
   const payingAccount = await findAssociatedTokenAddress(bidder, new PublicKey(tokenMint));
-  ////
 
   // transfer authority
   const {
@@ -115,7 +89,6 @@ export const placeBid = async ({
   txBatch.addTransaction(createApproveTx);
   txBatch.addAfterTransaction(createRevokeTx);
   txBatch.addSigner(transferAuthority);
-  ////
 
   // create place bid transaction
   const placeBidTransaction = new PlaceBid(
@@ -135,7 +108,6 @@ export const placeBid = async ({
     },
   );
   txBatch.addTransaction(placeBidTransaction);
-  ////
 
   const txId = await sendTransaction({
     connection,

@@ -26,5 +26,15 @@ export const sendTransaction = async ({
   }
   tx = await wallet.signTransaction(tx);
 
-  return connection.sendRawTransaction(tx.serialize(), options);
+  const MAX_RETRIES = 2;
+  for (let i = 0; i <= 2; i++) {
+    try {
+      return await connection.sendRawTransaction(tx.serialize(), options);
+    } catch (err) {
+      if (i === MAX_RETRIES) {
+        throw new Error('Max Retries Hit');
+      }
+      console.error(err);
+    }
+  }
 };
