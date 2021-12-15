@@ -43,9 +43,7 @@ export async function hasAlreadyRedeemed({
   wallet: Wallet,
   auction: PublicKey,
 }): Promise<boolean> {
-  let auctionAccount = await getAuctionAccount(connection, auction);
-  let bidderPot = await getBidderPotToken(connection, auctionAccount, wallet.publicKey);
-  return !!bidderPot;
+  return false;
 }
 
 export const instantSale = async ({
